@@ -7,5 +7,3 @@ function sum() {
 
   return result;
 }
-alert( sum(1,1) );
-alert( sum(2,5) );
