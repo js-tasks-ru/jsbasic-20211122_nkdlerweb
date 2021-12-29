@@ -14,5 +14,55 @@
  */
 export default class UserTable {
   constructor(rows) {
+    this._container = document.createElement('table');
+    this._rowsTemplate = '';
+    this.makeRows = rows;
+    this._template = '';
+    this.makeTemplate = this._rowsTemplate;
+    this._container.insertAdjacentHTML('afterBegin', this._template);
+    this.buttons.forEach(item => item.addEventListener('click', this.#onClick, {once: true}));
+  }
+
+  set makeRows(rows) {
+    this._rowsTemplate = rows.map(item => {
+      return `
+        <tr>
+          <td>${item.name}</td>
+          <td>${item.age}</td>
+          <td>${item.salary}</td>
+          <td>${item.city}</td>
+          <td><button>X</button></td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  set makeTemplate(_rowsTemplate) {
+    this._template = `
+      <thead>
+        <tr>
+          <th>Имя</th>
+          <th>Возраст</th>
+          <th>Зарплата</th>
+          <th>Город</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${this._rowsTemplate}
+      </tbody>
+    `;
+  }
+
+  get elem() {
+    return this._container;
+  }
+
+  get buttons() {
+    return this._container.querySelectorAll('button');
+  }
+
+  #onClick = (event) => {
+    event.target.closest('tr').remove();
   }
 }
