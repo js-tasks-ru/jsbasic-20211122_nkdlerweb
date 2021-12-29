@@ -1,79 +1,104 @@
 import createElement from '../../assets/lib/create-element.js';
 
 export default class RibbonMenu {
-  categories = [];
-  elem = null;
-
   constructor(categories) {
     this.categories = categories;
-    this.elem = this.#createMenu();
+    this.linkTemplate = '';
+    this.makeLink = this.categories;
+    this.template = '';
+    this.makeTemplate = this.linkTemplate;
+    this._container = createElement(this.template);
+
+    this.arrowRight = this._container.querySelector('.ribbon__arrow_right');
+    this.arrorLeft = this._container.querySelector('.ribbon__arrow_left');
+    this.arrowRight.addEventListener('click', this.onClickArrowRight);
+    this.arrorLeft.addEventListener('click', this.onClickArrowLeft);
+    this.ribbonInner = this._container.querySelector('.ribbon__inner');
+    
+    this.ribbonInner.addEventListener('scroll', this.onScroll);
+    
+    this.linksMenu = this._container.querySelectorAll('.ribbon__item');
+    this.ribbonInner.addEventListener('click', this.onClickMenu);
   }
 
-  #linkTemplate(category) {
-    return `<a href="#" class="ribbon__item" data-id="${category.id}">${category.name}</a>`;
+  set makeLink(categories) {
+    this.linkTemplate = categories.map(item => {
+      return `
+      <a href="#" class="ribbon__item" data-id="${item.id}">${item.name}</a>
+      `;
+    }).join('');
   }
 
-  #initMenu(menuElement) {
-    let menu = menuElement;
-    let ribbon = menuElement.querySelector('.ribbon__inner');
-    let arrowRight = menuElement.querySelector('.ribbon__arrow_right');
-    let arrowLeft = menuElement.querySelector('.ribbon__arrow_left');
-    let previousLink;
-  
-    menu.addEventListener('click', event => {
-      let target = event.target.closest('button');
+  set makeTemplate(linkTemplate) {
+    this.template = `
+      <div class="ribbon">
+        <button class="ribbon__arrow ribbon__arrow_left">
+          <img src="/assets/images/icons/angle-icon.svg" alt="icon">
+        </button>
+        <nav class="ribbon__inner">
+          ${this.linkTemplate}
+        </nav>
+        <button class="ribbon__arrow ribbon__arrow_right ribbon__arrow_visible">
+          <img src="/assets/images/icons/angle-icon.svg" alt="icon">
+        </button>
+      </div>
+    `;
+  }
 
-      if (target == arrowRight) {
-        ribbon.scrollBy(350, 0);
-      } else if (target == arrowLeft) {
-        ribbon.scrollBy(-350, 0);
+  get elem() {
+    return this._container;
+  }
+
+  onClickArrowRight = () => {
+    this.ribbonInner.scrollBy(350, 0);
+  }
+
+  onClickArrowLeft = () => {
+    this.ribbonInner.scrollBy(-350, 0);
+  }
+
+  onScroll = () => {
+    let scrollWidth = this.ribbonInner.scrollWidth;
+    let scrollLeft = this.ribbonInner.scrollLeft;
+    let clientWidht = this.ribbonInner.clientWidth;
+    
+    let scrollRight = scrollWidth - scrollLeft - clientWidht;
+
+    if (scrollLeft > 0) {
+      this.arrorLeft.classList.add('ribbon__arrow_visible');
+    } else if (scrollLeft === 0) {
+      this.arrorLeft.classList.remove('ribbon__arrow_visible');
+    }
+
+    if (scrollRight <= 1) {
+      this.arrowRight.classList.remove('ribbon__arrow_visible');
+    } else if (scrollRight > 1) {
+      this.arrowRight.classList.add('ribbon__arrow_visible');
+    }
+  }
+
+  onClickMenu = (event) => {
+    event.preventDefault();
+    let target = event.target;
+    
+    this.linksMenu.forEach(item => {
+      if (item.classList.contains('ribbon__item_active')) {
+        item.classList.remove('ribbon__item_active');
       }
 
-      if (event.target.classList.contains("ribbon__item")) {
-        event.preventDefault();
-
-        !previousLink || previousLink.classList.remove("ribbon__item_active");
-        event.target.classList.add("ribbon__item_active");
-        previousLink = event.target;
-
-        this.elem.dispatchEvent(new CustomEvent("ribbon-select", {
-          detail: event.target.dataset.id,
-          bubbles: true
-        }));
+      if (item === target && !(item.classList.contains('ribbon__item_active'))) {
+        item.classList.add('ribbon__item_active');
       }
     });
 
-    ribbon.addEventListener('scroll', () => {
-      let scrollRight = ribbon.scrollWidth - ribbon.scrollLeft - ribbon.clientWidth;
+    let id = target.dataset.id;
+    let category = {id: id};
 
-      if (ribbon.scrollLeft == 0) {
-        arrowLeft.classList.remove('ribbon__arrow_visible');
-      } else if (scrollRight < 1) {
-        arrowRight.classList.remove('ribbon__arrow_visible');
-      } else {
-        arrowLeft.classList.add('ribbon__arrow_visible');
-        arrowRight.classList.add('ribbon__arrow_visible');
-      }
+    const ribbonSelect = new CustomEvent('ribbon-select', {
+      detail: category.id,
+      bubbles: true
     });
-  }
 
-  #createMenu() {
-    let menu = createElement(`
-    <div class="ribbon">
-      <button class="ribbon__arrow ribbon__arrow_left">
-        <img src="/assets/images/icons/angle-icon.svg" alt="icon">
-      </button>
-      <nav class="ribbon__inner">
-        ${this.categories.map(this.#linkTemplate).join('')}
-      </nav>
-      <button class="ribbon__arrow ribbon__arrow_right ribbon__arrow_visible">
-        <img src="/assets/images/icons/angle-icon.svg" alt="icon">
-      </button>
-    </div>
-    `)
-
-    this.#initMenu(menu);
-
-    return menu;
+    this._container.dispatchEvent(ribbonSelect);  
   }
 }

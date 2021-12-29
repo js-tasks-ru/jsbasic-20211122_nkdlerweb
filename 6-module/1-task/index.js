@@ -13,52 +13,56 @@
  *
  */
 export default class UserTable {
-  #users = [];
-  elem = null;
-
   constructor(rows) {
-    this.#users = rows;
-    this.elem = this.#tableCreate();
+    this._container = document.createElement('table');
+    this._rowsTemplate = '';
+    this.makeRows = rows;
+    this._template = '';
+    this.makeTemplate = this._rowsTemplate;
+    this._container.insertAdjacentHTML('afterBegin', this._template);
+    this.buttons.forEach(item => item.addEventListener('click', this.#onClick, {once: true}));
   }
 
-  #trTemplate(user) {
-    return `
-    <tr>
-        <td>${user.name}</td>
-        <td>${user.age}</td>
-        <td>${user.salary}</td>
-        <td>${user.city}</td>
-        <td><button>X</button></td>
-    </tr>
+  set makeRows(rows) {
+    this._rowsTemplate = rows.map(item => {
+      return `
+        <tr>
+          <td>${item.name}</td>
+          <td>${item.age}</td>
+          <td>${item.salary}</td>
+          <td>${item.city}</td>
+          <td><button>X</button></td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  set makeTemplate(_rowsTemplate) {
+    this._template = `
+      <thead>
+        <tr>
+          <th>Имя</th>
+          <th>Возраст</th>
+          <th>Зарплата</th>
+          <th>Город</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${this._rowsTemplate}
+      </tbody>
     `;
   }
 
-  #onButtonClick = event => {
-    if (event.target.tagName == 'BUTTON') {
-      event.target.closest('tr').remove();
-    }
+  get elem() {
+    return this._container;
   }
 
-  #tableCreate() {
-    let table = document.createElement('table');
+  get buttons() {
+    return this._container.querySelectorAll('button');
+  }
 
-    table.innerHTML = `
-    <thead>
-        <tr>
-            <th>Имя</th>
-            <th>Возраст</th>
-            <th>Зарплата</th>
-            <th>Город</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-    ${this.#users.map(this.#trTemplate).join('')}
-    </tbody>
-    `
-
-    table.addEventListener('click', this.#onButtonClick);
-    
-    return table;
+  #onClick = (event) => {
+    event.target.closest('tr').remove();
   }
 }
